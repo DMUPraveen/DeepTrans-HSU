@@ -12,5 +12,5 @@ np.random.seed(seed)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print("\nSelected device:", device, end="\n\n")
 
-tmod = Trans_mod.Train_test(dataset='dc', device=device, skip_train=False, save=True)
+tmod = Trans_mod.Train_test(dataset='samson', device=device, skip_train=False, save=True)
 tmod.run(smry=False)

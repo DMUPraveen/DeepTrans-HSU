@@ -74,9 +74,9 @@ class Train_test:
         self.skip_train = skip_train
         self.device = device
         self.dataset = dataset
-        self.save = save
+        self.save = False
         self.save_dir = "trans_mod_" + dataset + "/"
-        os.makedirs(self.save_dir, exist_ok=True)
+        # os.makedirs(self.save_dir, exist_ok=True)
         if dataset == 'samson':
             self.P, self.L, self.col = 3, 156, 95
             self.LR, self.EPOCH = 6e-3, 200
@@ -188,8 +188,8 @@ class Train_test:
         abu_est = abu_est[:, :, self.order_abd]
         est_endmem = est_endmem[:, self.order_endmem]
 
-        sio.savemat(self.save_dir + f"{self.dataset}_abd_map.mat", {"A_est": abu_est})
-        sio.savemat(self.save_dir + f"{self.dataset}_endmem.mat", {"E_est": est_endmem})
+        # sio.savemat(self.save_dir + f"{self.dataset}_abd_map.mat", {"A_est": abu_est})
+        # sio.savemat(self.save_dir + f"{self.dataset}_endmem.mat", {"E_est": est_endmem})
 
         x = x.view(-1, self.col, self.col).permute(1, 2, 0).detach().cpu().numpy()
         re_result = re_result.view(-1, self.col, self.col).permute(1, 2, 0).detach().cpu().numpy()
@@ -208,15 +208,15 @@ class Train_test:
             print("Class", i + 1, ":", sad_cls[i])
         print("Mean SAD:", mean_sad)
 
-        with open(self.save_dir + "log1.csv", 'a') as file:
-            file.write(f"LR: {self.LR}, ")
-            file.write(f"WD: {self.weight_decay_param}, ")
-            file.write(f"RE: {re:.4f}, ")
-            file.write(f"SAD: {mean_sad:.4f}, ")
-            file.write(f"RMSE: {mean_rmse:.4f}\n")
-
-        plots.plot_abundance(target, abu_est, self.P, self.save_dir)
-        plots.plot_endmembers(true_endmem, est_endmem, self.P, self.save_dir)
+        # with open(self.save_dir + "log1.csv", 'a') as file:
+        #     file.write(f"LR: {self.LR}, ")
+        #     file.write(f"WD: {self.weight_decay_param}, ")
+        #     file.write(f"RE: {re:.4f}, ")
+        #     file.write(f"SAD: {mean_sad:.4f}, ")
+        #     file.write(f"RMSE: {mean_rmse:.4f}\n")
+        #
+        # plots.plot_abundance(target, abu_est, self.P, self.save_dir)
+        # plots.plot_endmembers(true_endmem, est_endmem, self.P, self.save_dir)
         
 # =================================================================
 
