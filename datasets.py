@@ -1,6 +1,8 @@
 import torch.utils.data
 import scipy.io as sio
 import torchvision.transforms as transforms
+from hyperVca import hyperVca
+import os
 
 
 class TrainData(torch.utils.data.Dataset):
@@ -41,9 +43,15 @@ class Data:
 
         data = sio.loadmat(data_path)
         self.Y = torch.from_numpy(data['Y'].T).to(device)
+        print(f"{self.Y.shape=}")
         self.A = torch.from_numpy(data['A'].T).to(device)
+        print(f"{self.A.shape=}")
         self.M = torch.from_numpy(data['M'])
+        print(f"{self.M.shape=}")
         self.M1 = torch.from_numpy(data['M1'])
+        print(f"{self.M1.shape=}")
+
+        assert(False)
 
     def get(self, typ):
         if typ == "hs_img":
@@ -61,3 +69,40 @@ class Data:
                                                    batch_size=batch_size,
                                                    shuffle=False)
         return train_loader
+
+
+class MyData:
+    def __init__(self, dataset, device):
+        LOAD_PATH = os.path.join("../hsi_datasets/",f"{dataset}.mat")
+        data = sio.loadmat(LOAD_PATH)
+        self.Y = data["Y"].T
+        self.Y = torch.from_numpy(self.Y).to(device)
+        self.A = data["A"].T
+        self.A = torch.from_numpy(self.A).to(device)
+        self.M = data["M"]
+        self.M = torch.from_numpy(self.M)
+        self.P = data["A"].shape[0]
+        self.M1 = hyperVca(data["Y"],self.P)[0]
+        self.M1 = torch.from_numpy(self.M1)
+        print(self.M1.shape)
+        self.col,self.row = map(int, tuple(data["HW"].ravel()))
+        self.L = data["Y"].shape[0]
+
+
+    def get(self, typ):
+        if typ == "hs_img":
+            return self.Y.float()
+        elif typ == "abd_map":
+            return self.A.float()
+        elif typ == "end_mem":
+            return self.M
+        elif typ == "init_weight":
+            return self.M1
+
+    def get_loader(self, batch_size=1):
+        train_dataset = TrainData(img=self.Y, target=self.A, transform=transforms.Compose([]))
+        train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
+                                                   batch_size=batch_size,
+                                                   shuffle=False)
+        return train_loader
+
