@@ -1,7 +1,6 @@
 defaults:
   - override hydra/sweeper: optuna
   - override hydra/sweeper/sampler: tpe
-  - override hydra/launcher: joblib
 
 
 hydra:
@@ -31,4 +30,4 @@ dim: 200
 beta: 5e3
 gamma: 3e-2
 wdp: 4e-5
-dataset: ??
+dataset: ???

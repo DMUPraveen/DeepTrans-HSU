@@ -1,0 +1,8 @@
+lr: 6e-3
+epoch: 110
+patch: 1
+dim: 120
+beta: 5e3
+gamma: 0.001538682881677986
+wdp: 4e-5
+dataset: Matern_Synthetic

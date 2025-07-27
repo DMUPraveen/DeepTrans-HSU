@@ -1,0 +1,8 @@
+lr: 6e-3
+epoch: 160
+patch: 1
+dim: 120
+beta: 5e3
+gamma: 0.00012172112758475463
+wdp: 4e-5
+dataset: Matern_Synthetic_0_3_perlin_raw

@@ -17,7 +17,7 @@ def main(cfg:DictConfig):
     np.random.seed(seed)
     print(cfg)
     # Device Configuration
-    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print("\nSelected device:", device, end="\n\n")
 
     tmod = Trans_mod.Train_test(dataset='samson_K_3', device=device, skip_train=False, save=True,cfg=cfg)
