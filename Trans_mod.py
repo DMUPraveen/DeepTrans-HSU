@@ -11,6 +11,9 @@ import datasets
 import plots
 import transformer
 import utils
+import utilities
+from omegaconf import DictConfig
+from typing import Optional
 
 
 class AutoEncoder(nn.Module):
@@ -69,21 +72,33 @@ class NonZeroClipper(object):
 
 
 class Train_test:
-    def __init__(self, dataset, device, skip_train=False, save=False):
+    def __init__(self, dataset, device, skip_train=False, save=False,cfg:Optional[DictConfig]=None):
+        print(cfg)
+        assert(cfg is not None)
+        # dataset=None
         super(Train_test, self).__init__()
         self.skip_train = skip_train
         self.device = device
-        self.dataset = dataset
+        self.dataset = cfg.dataset 
         self.save = False
         self.save_dir = "trans_mod_" + dataset + "/"
         # os.makedirs(self.save_dir, exist_ok=True)
-
-        self.data = datasets.MyData(dataset, device)
+        self.data = datasets.MyData(cfg.dataset, device)
+        print(self.data.P)
         self.P, self.L, self.col = self.data.P,self.data.L,self.data.col
-        self.LR, self.EPOCH = 6e-3, 200
-        self.patch, self.dim = 5, 200
-        self.beta, self.gamma = 5e3, 3e-2
-        self.weight_decay_param = 4e-5
+        # self.LR, self.EPOCH = 6e-3, 200
+        # self.patch, self.dim = 5, 200
+        # self.beta, self.gamma = 5e3, 3e-2
+        # self.weight_decay_param = 4e-5
+
+        self.LR = cfg.lr
+        self.EPOCH = cfg.epoch
+        self.patch = cfg.patch
+        self.dim = cfg.dim
+        self.beta = cfg.beta
+        self.gamma = cfg.gamma
+        self.weight_decay_param = cfg.wdp
+
         self.order_abd, self.order_endmem = (0, 1, 2), (0, 1, 2)
         self.loader = self.data.get_loader(batch_size=self.col ** 2)
         self.init_weight = self.data.get("init_weight").unsqueeze(2).unsqueeze(3).float()
@@ -185,8 +200,8 @@ class Train_test:
         est_endmem = net.state_dict()["decoder.0.weight"].cpu().numpy()
         est_endmem = est_endmem.reshape((self.L, self.P))
 
-        abu_est = abu_est[:, :, self.order_abd]
-        est_endmem = est_endmem[:, self.order_endmem]
+        # abu_est = abu_est[:, :, self.order_abd]
+        # est_endmem = est_endmem[:, self.order_endmem]
 
         # sio.savemat(self.save_dir + f"{self.dataset}_abd_map.mat", {"A_est": abu_est})
         # sio.savemat(self.save_dir + f"{self.dataset}_endmem.mat", {"E_est": est_endmem})
@@ -195,7 +210,7 @@ class Train_test:
         re_result = re_result.view(-1, self.col, self.col).permute(1, 2, 0).detach().cpu().numpy()
         re = utils.compute_re(x, re_result)
         print("RE:", re)
-
+        print(target.shape,abu_est.shape)
         rmse_cls, mean_rmse = utils.compute_rmse(target, abu_est)
         print("Class-wise RMSE value:")
         for i in range(self.P):
@@ -208,16 +223,35 @@ class Train_test:
             print("Class", i + 1, ":", sad_cls[i])
         print("Mean SAD:", mean_sad)
 
-        # with open(self.save_dir + "log1.csv", 'a') as file:
-        #     file.write(f"LR: {self.LR}, ")
-        #     file.write(f"WD: {self.weight_decay_param}, ")
-        #     file.write(f"RE: {re:.4f}, ")
-        #     file.write(f"SAD: {mean_sad:.4f}, ")
-        #     file.write(f"RMSE: {mean_rmse:.4f}\n")
-        #
-        # plots.plot_abundance(target, abu_est, self.P, self.save_dir)
-        # plots.plot_endmembers(true_endmem, est_endmem, self.P, self.save_dir)
+        print(f"{abu_est.shape=},{type(abu_est)}") 
+        print(f"{est_endmem.shape=},{type(est_endmem)}") 
+
+        A_pred = abu_est.reshape(-1,self.data.P).T
+        M_pred = est_endmem
+        os.makedirs("outputs",exist_ok=True)
+        output_dir = os.path.join("outputs",self.dataset)
+        os.makedirs(output_dir,exist_ok=True)
         
+        data_dict = sio.loadmat(
+            os.path.join("..","hsi_datasets",f"{self.dataset}.mat")
+        )
+        A_true = data_dict["A"]
+        M_true = data_dict["M"]
+        A_pred,M_pred = utilities.correct_permuation(A_pred=A_pred,M_pred=M_pred,A_true=A_true,M_true=M_true)
+        utilities.plot_figures(
+                A_pred=A_pred,M_pred=M_pred,A_true=A_true,M_true=M_true,
+                H=self.data.col,save_path=output_dir
+        )
+        resss = utilities.calculate_errors(
+                A_pred=A_pred,M_pred=M_pred,A_true=A_true,M_true=M_true,
+                save_path=output_dir
+        )
+
+        return (resss["total_rmse"].item())
+
+
+
+
 # =================================================================
 
 if __name__ == '__main__':

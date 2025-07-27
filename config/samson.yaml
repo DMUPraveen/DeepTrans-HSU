@@ -1,0 +1,8 @@
+lr: 6e-3
+epoch: 200
+patch: 5
+dim: 200
+beta: 5e3
+gamma: 3e-2
+wdp: 4e-5
+dataset: samson
